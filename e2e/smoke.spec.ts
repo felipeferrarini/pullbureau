@@ -1,5 +1,3 @@
-import { mkdir } from 'node:fs/promises'
-import path from 'node:path'
 import { selectLocale, translate } from '../src/i18n'
 import { expect, test } from '@playwright/test'
 
@@ -91,34 +89,36 @@ test('demo home works without credentials and refuses live endpoints', async ({ 
 })
 
 
-test('capture localized product screenshots', async ({ page }) => {
-  const directory = path.join(process.cwd(), 'public', 'screenshots')
-  await mkdir(directory, { recursive: true })
+test('capture localized product screenshots: scene', async ({ page }, testInfo) => {
+  const errors = collectErrors(page)
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/?intro=0&hora=10:00&fx=low&shot=1')
   await expect(page.getByTestId('hud-total')).toHaveText(/\d+/)
   await expect(page.locator('canvas').first()).toBeVisible()
-  await expect.poll(() => page.locator('canvas').first().evaluate(canvas => {
-    const sample = document.createElement('canvas')
-    sample.width = sample.height = 64
-    const context = sample.getContext('2d')!
-    context.drawImage(canvas as HTMLCanvasElement, 0, 0, 64, 64)
-    const pixels = context.getImageData(0, 0, 64, 64).data
-    const colors = new Set<string>()
-    for (let i = 0; i < pixels.length; i += 4) colors.add(`${pixels[i] >> 4},${pixels[i + 1] >> 4},${pixels[i + 2] >> 4}`)
-    return colors.size
-  }), { timeout: 60_000 }).toBeGreaterThan(30)
-  await page.screenshot({ path: path.join(directory, `${locale}-scene.png`), fullPage: true })
-  for (const [route, heading, name] of [
-    ['/entrar', t('ui.takeATicketLabel'), 'sign-in'],
-    ['/fechado', t('ui.bureauClosedToThePublic'), 'closed'],
-  ]) {
-    await page.goto(route)
-    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
-    if (route === '/fechado') {
-      await expect(page.locator('canvas')).toBeVisible()
-      await page.waitForLoadState('networkidle')
-    }
-    await page.screenshot({ path: path.join(directory, `${locale}-${name}.png`), fullPage: true })
-  }
+  await expect.poll(() => page.evaluate(() => {
+    const three = Reflect.get(window, '__pullbureauThree')
+    if (!three) return false
+    let characters = 0
+    three.scene.traverse((object: { isSkinnedMesh?: boolean }) => {
+      if (object.isSkinnedMesh) characters++
+    })
+    return characters > 0 && three.gl.info.render.triangles > 0
+  }), { timeout: 60_000 }).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath(`${locale}-scene.png`), fullPage: true })
+  expect(errors).toEqual([])
 })
+
+for (const [route, heading, name] of [
+  ['/entrar', 'ui.takeATicketLabel', 'sign-in'],
+  ['/fechado', 'ui.bureauClosedToThePublic', 'closed'],
+]) {
+  test(`capture localized product screenshots: ${name}`, async ({ page }, testInfo) => {
+    const errors = collectErrors(page)
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto(route, { waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('heading', { name: t(heading) })).toBeVisible()
+    if (route === '/fechado') await expect(page.locator('canvas')).toBeVisible()
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-${name}.png`), fullPage: true })
+    expect(errors).toEqual([])
+  })
+}
