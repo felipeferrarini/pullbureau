@@ -1,0 +1,52 @@
+.main {
+  --ui-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --green-900: #0f2a1f;
+  --green-800: #163a2b;
+  --green-700: #1f4d3a;
+  --green-600: #355e48;
+  --cream: #fbf6e6;
+  --formica: #e8dcc0;
+  --ink: #1b2a22;
+  --ink-muted: #6b6a5e;
+  --led-red: #ff3b3b;
+  --led-amber: #ffb020;
+  --tone-good: #6fe3a1;
+  --tone-warn: #ffc14d;
+  --tone-bad: #ff7a6b;
+  --tone-neutral: rgb(251 246 230 / 62%);
+  --ticker-h: 38px;
+  --strip-space: 96px;
+  --dock-space: 64px;
+
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.chrome {
+  display: contents;
+}
+
+.chrome > * {
+  transition: opacity 700ms ease;
+}
+
+.chrome[data-hidden='true'] > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  font-size: 1.4rem;
+}
+
+@media (max-width: 640px) {
+  .main {
+    --ticker-h: 32px;
+    --strip-space: 112px;
+  }
+}

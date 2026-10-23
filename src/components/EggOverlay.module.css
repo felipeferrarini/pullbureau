@@ -1,0 +1,73 @@
+.tint {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.alarm {
+  background: radial-gradient(ellipse at center, rgb(255 30 20 / 0%) 35%, rgb(255 30 20 / 42%) 100%);
+  animation: pulse 0.9s ease-in-out infinite;
+}
+
+.disco {
+  background: radial-gradient(ellipse at center, rgb(20 0 40 / 0%) 30%, rgb(30 0 60 / 45%) 100%);
+}
+
+.alarm.calm {
+  animation: none;
+  background: radial-gradient(ellipse at center, rgb(255 40 30 / 12%) 30%, rgb(255 30 20 / 30%) 100%);
+}
+
+.pill {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--strip-space) + 14px);
+  transform: translateX(-50%);
+  z-index: 11;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-family: var(--ui-font);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 30%);
+}
+
+.alarmPill {
+  background: #c1121f;
+  color: #fff;
+}
+
+.discoPill {
+  background: linear-gradient(90deg, #ff3cac, #784ba0, #2b86c5);
+  color: #fff;
+}
+
+.pill kbd {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 22%);
+  font: inherit;
+  font-size: 12px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .pill {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}

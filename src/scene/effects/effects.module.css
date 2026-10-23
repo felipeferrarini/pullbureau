@@ -1,0 +1,102 @@
+.stamp {
+  position: relative;
+  padding: 6px 18px 5px;
+  border: 5px double currentColor;
+  border-radius: 8px;
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+  background: rgb(255 253 246 / 18%);
+  font: 900 54px/1 Impact, 'Arial Black', sans-serif;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  text-shadow: 1px 0 0 currentColor, -1px 1px 1px rgb(255 255 255 / 35%);
+  filter: drop-shadow(0 0 1px currentColor);
+  opacity: 0.94;
+  transform: rotate(-9deg);
+  animation: stamp-slam 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  pointer-events: none;
+}
+
+.stamp::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border: 3px solid currentColor;
+  border-radius: 14px;
+  opacity: 0;
+  animation: ink-ring 520ms ease-out both;
+  animation-delay: inherit;
+}
+
+.approved {
+  color: #1f9d55;
+}
+
+.rejected {
+  color: #d62828;
+}
+
+.review {
+  color: #2b59c3;
+}
+
+.calm {
+  animation: fade-in 300ms ease-out both;
+}
+
+.calm::after {
+  display: none;
+}
+
+@keyframes stamp-slam {
+  0% {
+    opacity: 0;
+    transform: rotate(-4deg) scale(1.9);
+  }
+  45% {
+    opacity: 0.95;
+    transform: rotate(-9deg) scale(0.86, 0.78);
+  }
+  70% {
+    transform: rotate(-9deg) scale(1.06, 1.03);
+  }
+  100% {
+    opacity: 0.92;
+    transform: rotate(-9deg) scale(1);
+  }
+}
+
+@keyframes ink-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.banner {
+  padding: 12px 28px;
+  border-radius: 10px;
+  background: #1d3557;
+  color: #f1faee;
+  font: 900 48px/1 Impact, 'Arial Black', sans-serif;
+  white-space: nowrap;
+  animation: slam 300ms ease-out;
+  pointer-events: none;
+}
+
+@keyframes slam {
+  from {
+    transform: rotate(-12deg) scale(3);
+    opacity: 0;
+  }
+}
