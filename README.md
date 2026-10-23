@@ -1,105 +1,228 @@
+<div align="center">
+
 # Pullbureau
 
-A playful 3D office for your GitHub organization's pull request queue. Repositories become service counters, pull requests become numbered tickets, and reviewers bring the room to life. Built with Next.js, React Three Fiber, Three.js, Auth.js and Zustand.
+**Pull requests, please take a number.**
 
-![Pullbureau demo scene](public/screenshots/en-scene.png)
+Your GitHub organization's review queue, brought to life as a 3D public service office.
 
-[Português brasileiro](README.pt-BR.md) · [Contributing](CONTRIBUTING.md) · [Vocabulary](GLOSSARY.md)
+[![MIT license](https://img.shields.io/badge/license-MIT-355e48)](LICENSE)
+![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-355e48)
+![English and Brazilian Portuguese](https://img.shields.io/badge/languages-en%20%7C%20pt--BR-355e48)
 
-## Try the fictional demo
+[Try the demo](#quick-start) · [Connect your organization](#connect-your-organization) · [Deploy](#deploy) · [Português brasileiro](README.pt-BR.md)
 
-Requires Node.js 22 or newer and the pnpm version pinned in `package.json`.
+</div>
+
+![Pullbureau demo: repository counters, PR queues, review metrics and a notice board](public/screenshots/en-scene.png)
+
+Repositories become counters. PRs take a ticket and wait for review. Old requests sit down, fall asleep and gather dust. Between reviews, the office has coffee breaks, strikes, an optional helicopter inspection and the occasional duel.
+
+Pullbureau is **self-hosted, with one GitHub organization per deployment**. You bring your organization and credentials; the live dashboard admits only members of that organization. The bundled demo runs entirely on fictional data.
+
+## What happens in the office?
+
+| In the scene | On GitHub |
+| --- | --- |
+| Counter | A repository and its review queue |
+| Ticket number | A pull request number |
+| In line | An open, non-draft PR carrying your readiness label |
+| Waiting room | Drafts and PRs without that label |
+| Attendants and notice board | Reviewers, activity and review rankings |
+
+Select a PR to inspect its author, age, CI status and review timeline. The HUD tracks queue size, flow, review times and stalled work. You can follow a person, show closed counters, adjust rendering quality and enable sound.
+
+English and Brazilian Portuguese are included. The organization name, readiness label, time zone and business hours are configurable. See the [vocabulary](GLOSSARY.md) for the scene's terminology.
+
+## Quick start
+
+You need **Node.js 22+**, **pnpm 11.22.0** (pinned in `package.json`) and a browser with WebGL.
+
+Clone or fork this repository, enter its directory, then run:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm demo
 ```
 
-Open [localhost:3000](http://localhost:3000). Demo mode uses generated fictional data and needs no GitHub credentials. WebGL is required; a current desktop browser works best. Sound starts after browser interaction.
+Open [localhost:3000](http://localhost:3000). **No token, OAuth App or environment file is needed for the demo.** Sound becomes available after interacting with the page.
 
-## Connect an organization
+To try it in Portuguese:
 
-Copy `.env.example` to `.env.local` and configure your own values. Keep credentials server-side and out of Git.
+```sh
+LOCALE=pt-BR pnpm demo
+```
 
-| Variable | Purpose |
+## Connect your organization
+
+### 1. Create your local configuration
+
+```sh
+cp .env.example .env.local
+```
+
+Fill in these values for live operation:
+
+```dotenv
+GITHUB_ORG=your-organization
+GITHUB_TOKEN=replace-with-your-token
+AUTH_SECRET=replace-with-a-random-secret
+AUTH_GITHUB_ID=replace-with-your-oauth-client-id
+AUTH_GITHUB_SECRET=replace-with-your-oauth-client-secret
+AUTH_URL=http://localhost:3000
+```
+
+Generate a session secret with `openssl rand -base64 32`. Leave `DEMO_MODE` unset when connecting to real GitHub data. Startup reports missing required settings by name.
+
+### 2. Register a GitHub OAuth App
+
+In GitHub **Settings → Developer settings → OAuth Apps**, [create an OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) with:
+
+| Setting | Local development |
 | --- | --- |
-| `GITHUB_TOKEN` | Server token for GitHub GraphQL and REST reads |
-| `GITHUB_ORG` | Organization to display and use for membership checks |
-| `AUTH_SECRET` | Random session signing secret; generate with `openssl rand -base64 32` |
-| `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | GitHub OAuth App credentials |
-| `AUTH_URL` | Application origin, for example `http://localhost:3000` |
-| `AUTH_TRUST_HOST` | Set `true` only when your deployment's host headers are trusted |
-| `LOCALE` | `en` (default) or `pt-BR` |
-| `TIME_ZONE` | IANA time zone; default `UTC` |
-| `BUSINESS_START_HOUR`, `BUSINESS_END_HOUR` | Local business hours; defaults `9`, `18` |
-| `READY_LABEL` | Label marking a queued PR as ready; default `ready-for-review` |
-| `ORG_DISPLAY_NAME` | Display name; falls back to `GITHUB_ORG` |
-| `CTO_LOGIN` | Optional login for the special inspection character |
-| `IGNORED_LOGINS` | Comma-separated bots ignored in activity |
-| `EXCLUDED_LOGINS` | Comma-separated people hidden from the board |
-| `CHARACTER_OVERRIDES` | JSON mapping of logins to model IDs |
-| `E2E_BYPASS_AUTH` | Test-only `1`; requires nonproduction and a loopback request host; denied on known deployment hosts |
-| `ASSET_DIR` | Import-script source directory; alternatively pass a directory argument |
-| `DEMO_MODE` | `1` selects fictional demo data; omit for live operation |
+| Homepage URL | `http://localhost:3000` |
+| Authorization callback URL | `http://localhost:3000/api/auth/callback/github` |
 
-Create a GitHub OAuth App with homepage `http://localhost:3000` and callback `http://localhost:3000/api/auth/callback/github`. Use your deployment origin for both in production. Login requests `read:user`; the server independently checks organization membership with `GITHUB_TOKEN` before allowing access.
+Copy its client ID and client secret into `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`. For a deployment, use its HTTPS origin in both URLs and in `AUTH_URL`.
 
-For a classic personal access token, use `read:org` and `repo` when reading private repositories. Authorize organization SSO if required. `repo` also covers private workflow-run reads. Fine-grained tokens must target the organization and selected repositories, with organization **Members: read** and repository **Pull requests: read**, **Contents: read**, **Actions: read** and metadata access. CI completion timestamps come from the REST Actions API rather than the Check Runs API, which is unavailable with the fine-grained permission set used here. Organization policy may require approval. Check GraphQL access against the repositories you intend to display; GitHub's supported token permissions vary by endpoint. See GitHub's [membership API](https://docs.github.com/en/rest/orgs/members#check-organization-membership-for-a-user), [workflow-run API](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository), and [GraphQL authentication](https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#authenticating-with-graphql).
+The OAuth login identifies the visitor. Pullbureau separately uses the server token to check membership in `GITHUB_ORG` before allowing access.
+
+### 3. Configure the server token
+
+For a fine-grained personal access token, select your organization as the resource owner and grant access to the repositories you want to display:
+
+| Permission | Access |
+| --- | --- |
+| Organization: Members | Read |
+| Repository: Pull requests | Read |
+| Repository: Contents | Read |
+| Repository: Actions | Read |
+| Repository: Metadata | Read |
+
+A classic PAT can use `read:org` and `repo` for private repositories. Organization approval and SSO authorization may also be required. The token must be able to read membership, PR data and workflow runs; see GitHub's [membership](https://docs.github.com/en/rest/orgs/members#check-organization-membership-for-a-user) and [workflow-run](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository) documentation.
+
+CI completion timestamps come from the REST Actions API. Available CI status information also depends on the token's access to commit checks and statuses.
+
+### 4. Start the live dashboard
 
 ```sh
 pnpm dev
-# Production, with live credentials configured:
-pnpm build
-pnpm start
 ```
 
-## Deploy your own instance
+Sign in with an account that belongs to your organization. Non-draft PRs labeled `ready-for-review` enter the counter queues; change `READY_LABEL` if your team uses another label.
 
-This is one organization's private dashboard per deployment. The live site requires login by a member of `GITHUB_ORG`; publishing the source does not make live organization data public.
+> [!IMPORTANT]
+> OAuth credentials, `GITHUB_TOKEN` and `AUTH_SECRET` stay on the server. Keep `.env.local` out of Git. Making the source public does not make your organization's live dashboard public.
 
-For Vercel, import your own repository and use the Next.js preset. Configure the five required live variables, `AUTH_URL` with the production HTTPS origin, and presentation settings before building. Register that origin's `/api/auth/callback/github` URL in the OAuth App. If your reverse proxy supplies trusted host headers, configure `AUTH_TRUST_HOST=true`. Keep `E2E_BYPASS_AUTH` unset.
+## Configuration
 
-For a generic Node host, install dependencies, configure the same environment, run `pnpm build`, then `pnpm start --hostname 0.0.0.0`. Put an HTTPS reverse proxy in front of the process. The deployment must include `public/` and the bundled demo fixture if replay is used. No AWS credentials or services are needed.
+Set presentation options before building:
 
-`LOCALE`, `TIME_ZONE`, business hours, `READY_LABEL`, display name and `DEMO_MODE` are public build-time settings shared with the browser. Rebuild when changing them. Credentials remain server-only. To deploy only the fictional demo, set `DEMO_MODE=1` during both build and startup, without live credentials; live data endpoints remain denied.
+```dotenv
+ORG_DISPLAY_NAME=Acme Engineering
+LOCALE=en
+TIME_ZONE=UTC
+BUSINESS_START_HOUR=9
+BUSINESS_END_HOUR=18
+READY_LABEL=ready-for-review
+```
 
-## Controls and diagnostic URLs
+`ORG_DISPLAY_NAME` falls back to `GITHUB_ORG`. Leave `CTO_LOGIN` empty to omit the special inspector.
 
-Select a person or counter to inspect activity; use the HUD for scene controls. The UI offers English and Brazilian Portuguese through `LOCALE`.
+<details>
+<summary><strong>All environment variables</strong></summary>
 
-| Query | Effect |
+| Variable | Purpose / default |
 | --- | --- |
-| `?replay=demo` | Play the bundled fictional replay |
-| `?replay=demo&speed=2` | Adjust replay speed |
-| `?hora=10:00` | Override the scene clock in the configured time zone |
-| `?fx=low` / `normal` / `high` | Choose rendering quality |
-| `?finisher=approved` / `closed` / `tbc` | Simulate a duel outcome using a recorded PR thread |
-| `?fiscalizacao=1` | Trigger the optional inspector early |
-| `?shot=1` | Preserve the drawing buffer for screenshot tools |
-| `?intro=0` | Skip the initial camera walk-in |
-| `?egg=caramelo,sexta` | Trigger named scene events; supported names: `caramelo`, `furafila`, `aniversario`, `sexta`, `baile`, `cafe` |
-| `?variant=A` / `B` / `C` | Development filter prototypes |
-| `?q=example` | Text query for filter prototype C |
+| `GITHUB_ORG` | Required in live mode. Organization shown and checked for membership. |
+| `GITHUB_TOKEN` | Required in live mode. Server-side GitHub API token. |
+| `AUTH_SECRET` | Required in live mode. Session-signing secret. |
+| `AUTH_GITHUB_ID` | Required in live mode. OAuth App client ID. |
+| `AUTH_GITHUB_SECRET` | Required in live mode. OAuth App client secret. |
+| `AUTH_URL` | Your application origin, such as `http://localhost:3000`. |
+| `AUTH_TRUST_HOST` | Set `true` only behind a proxy with trusted host headers. |
+| `ORG_DISPLAY_NAME` | Public office name. Defaults to `GITHUB_ORG`. |
+| `LOCALE` | `en` (default) or `pt-BR`. |
+| `TIME_ZONE` | IANA time zone. Default: `UTC`. |
+| `BUSINESS_START_HOUR` | Opening hour in that time zone. Default: `9`. |
+| `BUSINESS_END_HOUR` | Closing hour in that time zone. Default: `18`. |
+| `READY_LABEL` | Label required to join a counter queue. Default: `ready-for-review`. |
+| `CTO_LOGIN` | Optional inspector login. No default. |
+| `IGNORED_LOGINS` | Comma-separated accounts ignored as bots. Default: `coderabbitai,sonarcloud,sonarqubecloud`. |
+| `EXCLUDED_LOGINS` | Comma-separated accounts omitted from people and rankings. |
+| `CHARACTER_OVERRIDES` | Optional JSON mapping of logins to IDs from `src/shared/characters.generated.json`. Leave empty for automatic assignment. |
+| `DEMO_MODE` | `1` selects the fictional replay and denies live data APIs. `pnpm demo` sets it for you. |
+| `ASSET_DIR` | Asset import scripts only. Source directory; can also be passed as an argument. |
+| `E2E_BYPASS_AUTH` | Local nonproduction tests only. Requires a loopback request host and is blocked on known deployment hosts. Keep unset for deployments. |
 
-Prototype facet keys are `author`, `reviewer`, `repo`, `age`, `ci`, and `status`; repeat a key to select multiple values. Prototype switching and browser debug hooks are development tools. Authentication bypass is restricted to local development tests and must never grant access in production.
+</details>
+
+> [!NOTE]
+> Locale, display name, time zone, business hours, readiness label and demo mode are public build-time settings shared with the browser. **Rebuild after changing them.** Credentials are not part of this public configuration.
+
+## Deploy
+
+**Vercel:** import your fork using the Next.js preset. Set the live environment variables, production `AUTH_URL` and presentation settings before building. Configure the matching OAuth callback URL.
+
+**A Node.js host:** install dependencies and configure the same environment, then run:
+
+```sh
+pnpm build
+pnpm start --hostname 0.0.0.0
+```
+
+Serve it through an HTTPS reverse proxy. Keep `public/` and the bundled replay fixture with your deployment. Set `AUTH_TRUST_HOST=true` only when you trust the proxy's host headers. No AWS services are required.
+
+To deploy **only the fictional demo**, set `DEMO_MODE=1` during both build and startup:
+
+```sh
+DEMO_MODE=1 pnpm build
+DEMO_MODE=1 pnpm start
+```
 
 ## Development
+
+Built with Next.js 16, React 19, React Three Fiber, Three.js, Auth.js, Zustand, Vitest and Playwright.
 
 ```sh
 pnpm lint
 pnpm tsc --noEmit
 pnpm test
-pnpm build
+DEMO_MODE=1 pnpm build
 pnpm exec playwright install chromium
 pnpm e2e
 ```
 
-CI runs these checks with fictional demo data and no real credentials. E2E starts a credential-free demo development server. Production bypass denial is covered by unit tests. Replay recordings from a live organization can contain private data; do not commit them. Keep generated demo fixtures fictional.
+CI uses fictional demo data without real credentials. Live recordings may contain private information; keep them out of commits and issues. To regenerate the bundled fictional replay, run `pnpm make-demo`.
 
-Code lives in `src/domain` (pure queue and event rules), `src/github` (API integration), `src/server` (access and caching), `src/client` (live/replay feeds), and `src/scene` (3D presentation). Shared contracts live in `src/types`.
+| Directory | Responsibility |
+| --- | --- |
+| `src/domain` | Queue, review, timing and event rules |
+| `src/github` / `src/server` | GitHub integration, membership checks and caching |
+| `src/client` | Live and replay data feeds |
+| `src/scene` / `src/duel` | 3D scene and review duels |
+| `src/i18n` / `src/types` | Translations and shared contracts |
 
-## License and assets
+<details>
+<summary><strong>Scene controls and diagnostic URLs</strong></summary>
 
-Application code is [MIT licensed](LICENSE), copyright 2026 Felipe Ferrarini. The package remains private to prevent accidental npm publication. Third-party models and HDRIs are CC0; Inter is OFL-1.1. See [asset credits and import instructions](public/CREDITS.md) and the [dependency license audit](docs/licenses/README.md). Procedural sound is generated in the browser; no third-party audio recordings are shipped.
+| Query | Effect |
+| --- | --- |
+| `?intro=0` | Skip the opening sequence. |
+| `?replay=demo&speed=2` | Play the fictional replay at a chosen speed. In demo mode, the bundled replay is always selected. |
+| `?hora=10:00` | Override the scene clock in the configured time zone. |
+| `?fx=low` / `normal` / `high` | Choose rendering quality. |
+| `?fiscalizacao=1` | Trigger the optional inspector early. |
+| `?finisher=approved` / `closed` / `tbc` | Simulate a review-duel outcome. |
+| `?egg=caramelo,sexta` | Trigger scene events: `caramelo`, `furafila`, `aniversario`, `sexta`, `baile`, `cafe`. |
+| `?shot=1` | Preserve the canvas drawing buffer for screenshots. |
+| `?variant=A` / `B` / `C` | Select a development filter prototype. |
+| `?q=example` | Text query for filter prototype C. |
 
-Non-draft PRs carrying `READY_LABEL` enter a counter queue; drafts and PRs without that label stay in the waiting room. The default label is `ready-for-review`.
+Filter keys: `author`, `reviewer`, `repo`, `age`, `ci`, `status`. Repeat a key to select multiple values. Sound requires browser interaction. If rendering is slow, try `?fx=low`.
+
+</details>
+
+**Get involved:** [Contributing](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md) · [Report a vulnerability](SECURITY.md)
+
+**Credits:** code is [MIT licensed](LICENSE), © 2026 Felipe Ferrarini. Models and HDRIs are CC0; Inter uses OFL-1.1. See [asset credits and import instructions](public/CREDITS.md) and the [dependency license audit](docs/licenses/README.md), including dependencies under LGPL/MPL. Audio is synthesized in the browser. `private: true` in `package.json` prevents accidental npm publication.
